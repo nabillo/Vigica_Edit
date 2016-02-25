@@ -18,22 +18,32 @@ package vigica_edit;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import vigica_edit.view.Error_Msg;
+import vigica_edit.model.Service;
 
 /**
- *
+ * Util class for file decomposition
+ * 
  * @author nabillo
  */
 public class Decompress_mw_s1 {
     
     private final byte[] endpatt = {(byte) 0x00, (byte)0x00, (byte)0x3f, (byte)0xff};
     private byte[] bindata;
-    private Error_Msg error_msg;
+    private Error_Msg error_msg = new Error_Msg();
+    private Service service;
+    
+
+    public ArrayList services = new ArrayList();
+
+    public ArrayList getServices() {
+        return services;
+    }
     
     /**
      *
@@ -85,6 +95,7 @@ public class Decompress_mw_s1 {
                 // add the network number and preference setting to the end of the file name
                 String rcdname_s = new String(rcdname, "cp860");
                 String asciiname = stype + "~" + recd_idx + "~" + rcdname_s + "~E0~" + "N" + nid_d + "~" + "P" + ppr_d;
+                services.add(new Service(stype, recd_idx, rcdname_s, nid_d, ppr_d));
                 recd_idx++;
                 bind_idx = nxt_idx;
 

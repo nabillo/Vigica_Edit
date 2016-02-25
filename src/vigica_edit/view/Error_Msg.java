@@ -29,6 +29,7 @@ public class Error_Msg {
     public void Error_diag(String msg) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setTitle("Error");
+        alert.setHeaderText(null);
         alert.setContentText(msg);
 
         alert.showAndWait();

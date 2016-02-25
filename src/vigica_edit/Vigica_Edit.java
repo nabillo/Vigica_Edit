@@ -16,28 +16,83 @@
  */
 package vigica_edit;
 
+import java.io.IOException;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 /**
- *
+ * Main class
+ * 
  * @author bnabi
  */
 public class Vigica_Edit extends Application {
     
+    private Stage primaryStage;
+    private BorderPane rootLayout;
+
+    public Vigica_Edit() {
+    }
+    
     @Override
-    public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("view/FXMLMain.fxml"));
+    public void start(Stage primaryStage) throws Exception {
+        this.primaryStage = primaryStage;
+        this.primaryStage.setTitle("Vigica Edit");
+
+        initRootLayout();
+
+        showServiceOverview();
         
-        Scene scene = new Scene(root);
-        
-        stage.setScene(scene);
-        stage.show();
     }
 
+    /**
+     * Initializes the root layout.
+     */
+    public void initRootLayout() {
+        try {
+            // Load root layout from fxml file.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(Vigica_Edit.class.getResource("view/RootLayout.fxml"));
+            rootLayout = (BorderPane) loader.load();
+
+            // Show the scene containing the root layout.
+            Scene scene = new Scene(rootLayout);
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Shows the person overview inside the root layout.
+     */
+    public void showServiceOverview() {
+        try {
+            // Load person overview.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(Vigica_Edit.class.getResource("view/FXMLMain.fxml"));
+            AnchorPane serviceOverview = (AnchorPane) loader.load();
+
+            // Set person overview into the center of root layout.
+            rootLayout.setCenter(serviceOverview);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Returns the main stage.
+     * @return
+     */
+    public Stage getPrimaryStage() {
+        return primaryStage;
+    }
+    
     /**
      * @param args the command line arguments
      */
