@@ -12,3 +12,6 @@
 hs_err_pid*
 /dist/
 /build/
+/Vigica_Edit/seg0/
+/Vigica_Edit/log/
+/derby.log

@@ -31,7 +31,7 @@ public class Service {
     private final IntegerProperty s_idx;
     private final StringProperty s_name;
     private final IntegerProperty s_nid;
-    private final IntegerProperty s_ppr;
+    private final StringProperty s_ppr;
     
     /**
     * Default constructor.
@@ -41,15 +41,15 @@ public class Service {
         this.s_idx = new SimpleIntegerProperty(0);
         this.s_name = new SimpleStringProperty("");
         this.s_nid = new SimpleIntegerProperty(0);
-        this.s_ppr = new SimpleIntegerProperty(0);
+        this.s_ppr = new SimpleStringProperty("");
     }
     
-    public Service(String stype, Integer recd_idx, String rcdname_s, Integer nid_d, Integer ppr_d) {
+    public Service(String stype, Integer recd_idx, String rcdname_s, Integer nid_d, String ppr_s) {
         this.s_type = new SimpleStringProperty(stype);
         this.s_idx = new SimpleIntegerProperty(recd_idx);
         this.s_name = new SimpleStringProperty(rcdname_s);
         this.s_nid = new SimpleIntegerProperty(nid_d);
-        this.s_ppr = new SimpleIntegerProperty(ppr_d);
+        this.s_ppr = new SimpleStringProperty(ppr_s);
     }
 
     public String getS_type() {
@@ -100,15 +100,15 @@ public class Service {
         return s_nid;
     }
     
-    public int getS_ppr() {
+    public String getS_ppr() {
         return s_ppr.get();
     }
 
-    public void setS_ppr(int s_ppr) {
+    public void setS_ppr(String s_ppr) {
         this.s_ppr.set(s_ppr);
     }
 
-    public IntegerProperty s_pprProperty() {
+    public StringProperty s_pprProperty() {
         return s_ppr;
     }
     

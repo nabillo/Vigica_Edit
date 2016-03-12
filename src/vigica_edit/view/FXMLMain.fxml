@@ -8,17 +8,21 @@
 
 <AnchorPane id="AnchorPane" prefHeight="840.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vigica_edit.view.FXMLMainController">
     <children>
-        <Button fx:id="button" onAction="#handleOpenAction" prefHeight="53.0" prefWidth="78.0" text="Open" textAlignment="CENTER" />
-      <TableView fx:id="serviceTable" layoutX="-5.0" layoutY="66.0" prefHeight="774.0" prefWidth="1024.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="66.0">
+      <Button fx:id="button1" onAction="#handleImportAction" prefHeight="31.0" prefWidth="125.0" text="Import" textAlignment="CENTER" />
+      <Button fx:id="button2" layoutX="140.0" onAction="#handleExportAction" prefHeight="31.0" prefWidth="125.0" text="Export" textAlignment="CENTER" />
+      <Button fx:id="button3" layoutX="280.0" onAction="#handleCompareAction" prefHeight="31.0" prefWidth="125.0" text="Compare" textAlignment="CENTER" />
+      <TextField layoutX="193.0" layoutY="35.0" prefHeight="31.0" prefWidth="423.0" promptText="Name" />
+      <TextField layoutY="35.0" prefHeight="31.0" prefWidth="111.0" promptText="ID" />
+      <TextField layoutX="113.0" layoutY="35.0" prefHeight="31.0" prefWidth="79.0" promptText="Type" />
+      <Button fx:id="button4" layoutX="628.0" layoutY="35.0" prefHeight="31.0" prefWidth="125.0" text="Filtter" textAlignment="CENTER" />
+      <TableView fx:id="serviceTable" layoutX="-5.0" layoutY="71.0" prefHeight="769.0" prefWidth="1024.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="71.0">
         <columns>
-          <TableColumn fx:id="s_idxColumn" prefWidth="110.0" text="ID" />
-          <TableColumn fx:id="s_typeColumn" minWidth="0.0" prefWidth="81.0" text="Type" />
+            <TableColumn fx:id="s_idxColumn" prefWidth="110.0" text="ID" />
+            <TableColumn fx:id="s_typeColumn" text="Type" />
+            <TableColumn fx:id="s_nidColumn" prefWidth="110.0" text="NID" />
             <TableColumn fx:id="s_nameColumn" minWidth="0.0" prefWidth="425.0" text="Name" />
-            <TableColumn fx:id="s_nidColumn" minWidth="0.0" prefWidth="84.0" text="NID" />
-            <TableColumn fx:id="s_pprColumn" maxWidth="132.0" minWidth="0.0" prefWidth="115.0" text="Preference" />
+            <TableColumn fx:id="s_pprColumn" maxWidth="298.0" minWidth="0.0" prefWidth="298.0" text="Preference" />
         </columns>
       </TableView>
-      <Button fx:id="button1" layoutX="93.0" onAction="#handleSaveAction" prefHeight="53.0" prefWidth="78.0" text="Save" textAlignment="CENTER" />
-      <Button fx:id="button11" layoutX="194.0" onAction="#handleCompareAction" prefHeight="53.0" prefWidth="87.0" text="Compare" textAlignment="CENTER" />
     </children>
 </AnchorPane>
