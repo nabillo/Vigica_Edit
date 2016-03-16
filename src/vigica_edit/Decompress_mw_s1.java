@@ -36,11 +36,8 @@ import vigica_edit.model.Service;
 public class Decompress_mw_s1 {
     
     private final byte[] endpatt = {(byte) 0x00, (byte)0x00, (byte)0x3f, (byte)0xff};
-    private byte[] bindata;
     static private Error_Msg error_msg = new Error_Msg();
-    private Service service;
     
-
     public ArrayList services = new ArrayList();
 
     public ArrayList getServices() {
@@ -52,6 +49,8 @@ public class Decompress_mw_s1 {
      * @param chemin
      */
     public void decompress(String chemin) throws Exception {
+        byte[] bindata;
+        
         Path binfile = Paths.get(chemin);
         bindata = Files.readAllBytes(binfile);
         Integer binl = bindata.length;
@@ -65,7 +64,7 @@ public class Decompress_mw_s1 {
         Integer recd_idx = 1;
         Integer bind_idx = 16;
         while (recd_idx <= recd_nmbr_d) {
-            Integer nxt_idx = find_end(bind_idx);
+            Integer nxt_idx = find_end(bindata, bind_idx);
             byte[] binrcd = Arrays.copyOfRange(bindata, bind_idx, nxt_idx);
             Integer rcdlen = nxt_idx - bind_idx;
             // create record file name
@@ -102,7 +101,7 @@ public class Decompress_mw_s1 {
         }
     }
     
-    private Integer find_end(Integer strt) {
+    private Integer find_end(byte[] bindata, Integer strt) {
         Integer sidx;
         for (sidx = strt; sidx <strt+300; sidx++)
         {   
@@ -206,10 +205,22 @@ public class Decompress_mw_s1 {
     public void update_bdd (Service service)  throws Exception {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Transaction tx = session.beginTransaction();    
-        Query q = session.createSQLQuery("UPDATE SERVICE SET  " + "PPR = :ppr " + "WHERE IDX = :idx");
-        q.setString("ppr",service.getS_ppr());
+//        Query q = session.createSQLQuery("UPDATE SERVICE SET  " + "PPR = :ppr " + "WHERE IDX = :idx");
+//        q.setString("ppr",service.getS_ppr());
+//        q.setInteger("idx",service.getS_idx());
+//        int rowCount = q.executeUpdate();
+        session.update(service);
+        tx.commit();
+        session.close();
+    }
+    
+    public void delete_service_bdd (Service service) throws Exception {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx = session.beginTransaction();    
+        Query q = session.createSQLQuery("DELETE FROM SERVICE " + "WHERE IDX = :idx");
         q.setInteger("idx",service.getS_idx());
         int rowCount = q.executeUpdate();
         tx.commit();
+        session.close();
     }
 }
