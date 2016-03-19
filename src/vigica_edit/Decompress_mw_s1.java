@@ -38,9 +38,9 @@ public class Decompress_mw_s1 {
     private final byte[] endpatt = {(byte) 0x00, (byte)0x00, (byte)0x3f, (byte)0xff};
     static private Error_Msg error_msg = new Error_Msg();
     
-    public ArrayList services = new ArrayList();
+    public ArrayList<Service> services = new ArrayList();
 
-    public ArrayList getServices() {
+    public ArrayList<Service> getServices() {
         return services;
     }
     
@@ -53,32 +53,32 @@ public class Decompress_mw_s1 {
         
         Path binfile = Paths.get(chemin);
         bindata = Files.readAllBytes(binfile);
-        Integer binl = bindata.length;
+        int binl = bindata.length;
         byte[] givl_s = Arrays.copyOfRange(bindata, 0, 4);
-        Integer givl_d = ByteBuffer.wrap(givl_s).getInt() + 4;
+        int givl_d = ByteBuffer.wrap(givl_s).getInt() + 4;
         if (binl - givl_d != 0)
             error_msg.Error_diag("length of input binary file \\n differs from length given in that file!");
 
         byte[] recd_nmbr_s = Arrays.copyOfRange(bindata, 12, 16);
-        Integer recd_nmbr_d = ByteBuffer.wrap(recd_nmbr_s).getInt();
-        Integer recd_idx = 1;
-        Integer bind_idx = 16;
+        int recd_nmbr_d = ByteBuffer.wrap(recd_nmbr_s).getInt();
+        int recd_idx = 1;
+        int bind_idx = 16;
         while (recd_idx <= recd_nmbr_d) {
-            Integer nxt_idx = find_end(bindata, bind_idx);
+            int nxt_idx = find_end(bindata, bind_idx);
             byte[] binrcd = Arrays.copyOfRange(bindata, bind_idx, nxt_idx);
-            Integer rcdlen = nxt_idx - bind_idx;
+            int rcdlen = nxt_idx - bind_idx;
             // create record file name
             byte rcdnamel = binrcd[1];
             byte[] rcdname = Arrays.copyOfRange(binrcd, 5, Byte.toUnsignedInt(rcdnamel) + 5);
-            for (int idx=0; idx < Byte.toUnsignedInt(rcdnamel); idx++) {
-                if (rcdname[idx] < 0x21)  // non printable codes or spaces
-                    rcdname[idx] = 0x5f;    // an underscore instead
-                if (rcdname[idx] == 0x7f || rcdname[idx] == 0x3c || rcdname[idx] == 0x3a || rcdname[idx] == 0x22 || 
-                    rcdname[idx] == 0x2f || rcdname[idx] == 0x5c || rcdname[idx] == 0x7c || rcdname[idx] == 0x3f ||
-                    rcdname[idx] == 0x2a
-                    )  // control chars < > : " / \ | ? * space are not allowed in file names; replace by %
-                    rcdname[idx] = 0x25;
-            }
+//            for (int idx=0; idx < Byte.toUnsignedInt(rcdnamel); idx++) {
+//                if (rcdname[idx] < 0x21)  // non printable codes or spaces
+//                    rcdname[idx] = 0x5f;    // an underscore instead
+//                if (rcdname[idx] == 0x7f || rcdname[idx] == 0x3c || rcdname[idx] == 0x3a || rcdname[idx] == 0x22 || 
+//                    rcdname[idx] == 0x2f || rcdname[idx] == 0x5c || rcdname[idx] == 0x7c || rcdname[idx] == 0x3f ||
+//                    rcdname[idx] == 0x2a
+//                    )  // control chars < > : " / \ | ? * space are not allowed in file names; replace by %
+//                    rcdname[idx] = 0x25;
+//            }
 
             // start the filename with R | TV | ? to indicate the radio/TV/unknown service type
             String stype = "U"; // unknown
@@ -88,21 +88,40 @@ public class Decompress_mw_s1 {
                 stype = "R";
 
             byte[] nid_s = Arrays.copyOfRange(binrcd, rcdlen - 26, rcdlen - 24); // also fixed distance back from end
-            Integer nid_d = getInt(nid_s); // make the two bytes into an integer
+            int nid_d = getInt(nid_s); // make the two bytes into an integer
             byte[] ppr = Arrays.copyOfRange(binrcd, rcdlen - 10, rcdlen - 8); // preference setting
             String ppr_s = getPreference(ppr);
 
             // add the network number and preference setting to the end of the file name
-            String rcdname_s = new String(rcdname, "cp860");
-            String asciiname = stype + "~" + recd_idx + "~" + rcdname_s + "~E0~" + "N" + nid_d + "~" + "P" + ppr_s;
-            services.add(new Service(stype, recd_idx, rcdname_s, nid_d, ppr_s));
+            String rcdname_s = new String(rcdname, "UTF-8");
+            String binrcd_s = bytesToHexString(binrcd);
+//            String asciiname = stype + "~" + recd_idx + "~" + rcdname_s + "~E0~" + "N" + nid_d + "~" + "P" + ppr_s;
+            services.add(new Service(stype, recd_idx, rcdname_s, nid_d, ppr_s,binrcd_s, false));
             recd_idx++;
             bind_idx = nxt_idx;
         }
     }
     
-    private Integer find_end(byte[] bindata, Integer strt) {
-        Integer sidx;
+    public static byte[] hexStringToBytes(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
+    public static String bytesToHexString(byte[] in) {
+        final StringBuilder builder = new StringBuilder();
+        for (byte b : in) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
+
+    private int find_end(byte[] bindata, int strt) {
+        int sidx;
         for (sidx = strt; sidx <strt+300; sidx++)
         {   
             if (Arrays.equals(Arrays.copyOfRange(bindata, sidx, sidx+4), endpatt))
@@ -111,7 +130,7 @@ public class Decompress_mw_s1 {
         return sidx+4;
     }
     
-    private Integer getInt(byte[] in) {
+    private int getInt(byte[] in) {
         int val = ((in[0] & 0xff) << 8) | (in[1] & 0xff);;
         return val;
     }
@@ -200,27 +219,5 @@ public class Decompress_mw_s1 {
             }
         }
         return new_ppr;
-    }
-    
-    public void update_bdd (Service service)  throws Exception {
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction tx = session.beginTransaction();    
-//        Query q = session.createSQLQuery("UPDATE SERVICE SET  " + "PPR = :ppr " + "WHERE IDX = :idx");
-//        q.setString("ppr",service.getS_ppr());
-//        q.setInteger("idx",service.getS_idx());
-//        int rowCount = q.executeUpdate();
-        session.update(service);
-        tx.commit();
-        session.close();
-    }
-    
-    public void delete_service_bdd (Service service) throws Exception {
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction tx = session.beginTransaction();    
-        Query q = session.createSQLQuery("DELETE FROM SERVICE " + "WHERE IDX = :idx");
-        q.setInteger("idx",service.getS_idx());
-        int rowCount = q.executeUpdate();
-        tx.commit();
-        session.close();
     }
 }

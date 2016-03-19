@@ -20,6 +20,8 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 /**
  * Model class for
@@ -32,6 +34,8 @@ public class Service {
     private final StringProperty s_name;
     private final IntegerProperty s_nid;
     private final StringProperty s_ppr;
+    private final StringProperty s_line;
+    private final BooleanProperty s_flag;
     
     /**
     * Default constructor.
@@ -42,14 +46,18 @@ public class Service {
         this.s_name = new SimpleStringProperty("");
         this.s_nid = new SimpleIntegerProperty(0);
         this.s_ppr = new SimpleStringProperty("");
+        this.s_line = new SimpleStringProperty("");
+        this.s_flag = new SimpleBooleanProperty(false);
     }
     
-    public Service(String stype, Integer recd_idx, String rcdname_s, Integer nid_d, String ppr_s) {
+    public Service(String stype, Integer recd_idx, String rcdname_s, Integer nid_d, String ppr_s, String line_s, Boolean flag_b) {
         this.s_type = new SimpleStringProperty(stype);
         this.s_idx = new SimpleIntegerProperty(recd_idx);
         this.s_name = new SimpleStringProperty(rcdname_s);
         this.s_nid = new SimpleIntegerProperty(nid_d);
         this.s_ppr = new SimpleStringProperty(ppr_s);
+        this.s_line = new SimpleStringProperty(line_s);
+        this.s_flag = new SimpleBooleanProperty(flag_b);
     }
 
     public String getS_type() {
@@ -112,4 +120,27 @@ public class Service {
         return s_ppr;
     }
     
+    public String getS_line() {
+        return s_line.get();
+    }
+
+    public void setS_line(String s_line) {
+        this.s_line.set(s_line);
+    }
+
+    public StringProperty s_lineProperty() {
+        return s_line;
+    }
+    
+    public Boolean getS_flag() {
+        return s_flag.get();
+    }
+
+    public void setS_flag(Boolean s_flag) {
+        this.s_flag.set(s_flag);
+    }
+
+    public BooleanProperty s_flagProperty() {
+        return s_flag;
+    }
 }

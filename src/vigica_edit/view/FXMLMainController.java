@@ -18,7 +18,7 @@ package vigica_edit.view;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
@@ -41,11 +41,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.Callback;
+import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import vigica_edit.Decompress_mw_s1;
 import vigica_edit.HibernateUtil;
+import vigica_edit.Service_BDD;
 import vigica_edit.model.Service;
 
 /**
@@ -55,6 +57,7 @@ import vigica_edit.model.Service;
 public class FXMLMainController implements Initializable {
     
     private Decompress_mw_s1 decompress = new Decompress_mw_s1();
+    private Service_BDD bdd = new Service_BDD();
     static private Error_Msg error_msg = new Error_Msg();
     /**
     * The data as an observable list of Service.
@@ -109,16 +112,14 @@ public class FXMLMainController implements Initializable {
                 removeItem.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent event) {
-//                        final List<Service> selectedPeople = new ArrayList<>(table.getSelectionModel().getSelectedItems());
-//                        table.getItems().removeAll(selectedPeople);
                         final Service service = row.getItem();
                         serviceData.removeAll(service);
                         
                         try {
-                            decompress.delete_service_bdd(service);
+                            bdd.delete_bdd(service);
                         }
-                        catch (Exception e) {
-                            error_msg.Error_diag("Error delete service BDD\n"+e.getCause().getMessage());
+                        catch (HibernateException e) {
+                            error_msg.Error_diag("Error delete service BDD\n"+e.getMessage());
                         }
                     }
                 });
@@ -167,10 +168,11 @@ public class FXMLMainController implements Initializable {
                                         
                                         try {
                                             service.setS_ppr(new_ppr);
-                                            decompress.update_bdd(service);
+                                            service.setS_flag(true);
+                                            bdd.update_bdd(service);
                                         }
-                                        catch (Exception e) {
-                                            error_msg.Error_diag("Error update BDD\n"+e.getCause().getMessage());
+                                        catch (HibernateException e) {
+                                            error_msg.Error_diag("Error update BDD\n"+e.getMessage());
                                         }
                                     }
                                 });
@@ -201,10 +203,11 @@ public class FXMLMainController implements Initializable {
                 
                 try {
                     service.setS_name(t.getNewValue());
-                    decompress.update_bdd(service);
+                    service.setS_flag(true);
+                    bdd.update_bdd(service);
                 }
-                catch (Exception e) {
-                    error_msg.Error_diag("Error update BDD\n"+e.getCause().getMessage());
+                catch (HibernateException e) {
+                    error_msg.Error_diag("Error update BDD\n"+e.getMessage());
                 }
             }
         });
@@ -220,29 +223,15 @@ public class FXMLMainController implements Initializable {
         services = decompress.getServices();
 
         // Add to database
-        //Get the session from the session factory.
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction tx = null;
         try{
-            // begin the transaction from the sessiom
-            tx = session.beginTransaction();
+            bdd.truncate_bdd();
+            bdd.save_bdd(services);
             
-            for(Service service : services){
-                session.save(service);
-            }
-
-            //The changes to persistent object will be written to database.
-            tx.commit();
-
             // print services into tableview
             serviceData.setAll(services);
             serviceTable.setItems(serviceData);
-        }catch (Exception e) {
-            error_msg.Error_diag(e.getCause().getMessage());
-            if (tx!=null) tx.rollback();
-        }finally {
-            // close the session
-            session.close();
+        }catch (HibernateException e) {
+            error_msg.Error_diag("Error save BDD\n"+e.getMessage());
         }
     }
 
@@ -261,12 +250,7 @@ public class FXMLMainController implements Initializable {
         
         ArrayList <Service> services = new ArrayList();;
         
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction tx = null;
         try{
-            // begin the transaction from the sessiom
-            tx = session.beginTransaction();
-            
             String sql = "FROM Service WHERE 1=1 ";
             if (s_idx.getText().length() > 0)
                 sql += " AND IDX = " + s_idx.getText();
@@ -276,23 +260,39 @@ public class FXMLMainController implements Initializable {
                 sql += " AND UPPER(NAME) like UPPER('" + s_name.getText() + "')";
             sql += " ORDER BY IDX";
             
-            Query q = session.createQuery(sql);
-            
-            serviceTable.getItems().clear();
-            
-            for (Iterator<Service> it = q.iterate(); it.hasNext();) {
-                Service result = it.next();
-                Service service = new Service(result.getS_type(), result.getS_idx(), result.getS_name(), result.getS_nid(), result.getS_ppr());
-                services.add(service);
-            }
+            services = bdd.read_bdd(sql);
             serviceData.setAll(services);
             
-        }catch (Exception e) {
-            error_msg.Error_diag(e.getCause().getMessage());
-            if (tx!=null) tx.rollback();
-        }finally {
-            // close the session
-            session.close();
+        }catch (HibernateException e) {
+            error_msg.Error_diag("Error read BDD\n"+e.getMessage());
+        }
+    }
+    
+    @FXML
+    private void handleDuplicateAction(ActionEvent event) {
+        
+        ArrayList<String> uniqueId = new ArrayList<String>();
+        ArrayList <Service> services = new ArrayList();
+        int i=1;
+        
+        for (Service service :serviceData) {
+            if (!uniqueId.contains(service.getS_name())) {
+                service.setS_idx(i);
+                services.add(service);
+                i++;
+                uniqueId.add(service.getS_name());
+            }
+        }
+        
+        // Add to database
+        try{
+            bdd.truncate_bdd();
+            bdd.save_bdd(services);
+            
+            // print services into tableview
+            serviceData.setAll(services);
+        }catch (HibernateException e) {
+            error_msg.Error_diag("Error save BDD\n"+e.getMessage());
         }
     }
     
