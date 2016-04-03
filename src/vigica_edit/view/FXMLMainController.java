@@ -16,9 +16,9 @@
  */
 package vigica_edit.view;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
@@ -40,13 +40,12 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 import vigica_edit.Decompress_mw_s1;
-import vigica_edit.HibernateUtil;
+import vigica_edit.Generate_mw_s1;
 import vigica_edit.Service_BDD;
 import vigica_edit.model.Service;
 
@@ -56,14 +55,19 @@ import vigica_edit.model.Service;
  */
 public class FXMLMainController implements Initializable {
     
-    private Decompress_mw_s1 decompress = new Decompress_mw_s1();
+    private final Decompress_mw_s1 decompress = new Decompress_mw_s1();
+    private final Generate_mw_s1 generate = new Generate_mw_s1();
     private Service_BDD bdd = new Service_BDD();
     static private Error_Msg error_msg = new Error_Msg();
+    final FileChooser fileChooser = new FileChooser();
+    
     /**
     * The data as an observable list of Service.
     */
     private ObservableList<Service> serviceData = FXCollections.observableArrayList();
     
+    @FXML
+    private Stage stage;
     @FXML
     private TableView<Service> serviceTable;
     @FXML
@@ -89,7 +93,7 @@ public class FXMLMainController implements Initializable {
      */
     public FXMLMainController() {
     }
-
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         
@@ -217,22 +221,31 @@ public class FXMLMainController implements Initializable {
     private void handleImportAction(ActionEvent event) throws Exception {
 
         ArrayList <Service> services;
-        final String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
+        String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
 
-        decompress.decompress(chemin);
-        services = decompress.getServices();
+        stage = (Stage) serviceTable.getScene().getWindow();
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            chemin = file.getAbsolutePath();
 
-        // Add to database
-        try{
-            bdd.truncate_bdd();
-            bdd.save_bdd(services);
-            
-            // print services into tableview
-            serviceData.setAll(services);
-            serviceTable.setItems(serviceData);
-        }catch (HibernateException e) {
-            error_msg.Error_diag("Error save BDD\n"+e.getMessage());
+            decompress.decompress(chemin);
+            services = decompress.getServices();
+
+            // Add to database
+            try{
+                bdd.truncate_bdd();
+                bdd.save_bdd(services);
+
+                // print services into tableview
+                serviceData.setAll(services);
+                serviceTable.setItems(serviceData);
+                error_msg.Info_diag("Services loaded");
+            }catch (HibernateException e) {
+                error_msg.Error_diag("Error save BDD\n"+e.getMessage());
+            }
         }
+        else
+            error_msg.Error_diag("No file choosed\n");
     }
 
     @FXML
@@ -242,7 +255,28 @@ public class FXMLMainController implements Initializable {
     
     @FXML
     private void handleExportAction(ActionEvent event) {
+        final String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
 
+        stage = (Stage) serviceTable.getScene().getWindow();
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            ArrayList <Service> services = new ArrayList();;
+
+            try{
+                String sql = "FROM Service ";
+                services = bdd.read_bdd(sql);
+
+                generate.compress(services, chemin);
+                error_msg.Info_diag("Services exported");
+
+            }catch (HibernateException e) {
+                error_msg.Error_diag("Error read BDD\n"+e.getMessage());
+            }catch (Exception e) {
+                error_msg.Error_diag("Error Export\n"+e.getMessage());
+            }
+        }
+        else
+            error_msg.Error_diag("No file choosed\n");
     }
     
     @FXML
@@ -271,7 +305,7 @@ public class FXMLMainController implements Initializable {
     @FXML
     private void handleDuplicateAction(ActionEvent event) {
         
-        ArrayList<String> uniqueId = new ArrayList<String>();
+        ArrayList<String> uniqueId = new ArrayList<>();
         ArrayList <Service> services = new ArrayList();
         int i=1;
         
@@ -291,6 +325,7 @@ public class FXMLMainController implements Initializable {
             
             // print services into tableview
             serviceData.setAll(services);
+            error_msg.Info_diag("Duplicate removed");
         }catch (HibernateException e) {
             error_msg.Error_diag("Error save BDD\n"+e.getMessage());
         }

@@ -37,7 +37,7 @@ public class Service_BDD {
         
     }
     
-    public ArrayList read_bdd () throws Exception {
+    public ArrayList read_bdd () throws HibernateException {
         return read_bdd("FROM Service");
     }
     

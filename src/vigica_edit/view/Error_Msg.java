@@ -35,4 +35,13 @@ public class Error_Msg {
         alert.showAndWait();
     }
     
+    public void Info_diag(String msg) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Info");
+        alert.setHeaderText(null);
+        alert.setContentText(msg);
+
+        alert.showAndWait();
+    }
+    
 }

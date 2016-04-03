@@ -8,5 +8,6 @@
     <property column="NID" name="s_nid" type="int"/>
     <property column="PPR" name="s_ppr" type="string"/>
     <property column="LINE" name="s_line" type="text"/>
+    <property column="FLAG" name="s_flag" type="boolean"/>
   </class>
 </hibernate-mapping>

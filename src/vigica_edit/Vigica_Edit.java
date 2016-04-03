@@ -18,11 +18,13 @@ package vigica_edit;
 
 import java.io.IOException;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 /**
  * Main class
@@ -46,6 +48,8 @@ public class Vigica_Edit extends Application {
 
         showServiceOverview();
         
+        this.primaryStage.setOnCloseRequest(e -> Platform.exit());
+        
     }
 
     /**
@@ -62,13 +66,14 @@ public class Vigica_Edit extends Application {
             Scene scene = new Scene(rootLayout);
             primaryStage.setScene(scene);
             primaryStage.show();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Shows the person overview inside the root layout.
+     * Shows the service overview inside the root layout.
      */
     public void showServiceOverview() {
         try {
@@ -77,7 +82,7 @@ public class Vigica_Edit extends Application {
             loader.setLocation(Vigica_Edit.class.getResource("view/FXMLMain.fxml"));
             AnchorPane serviceOverview = (AnchorPane) loader.load();
 
-            // Set person overview into the center of root layout.
+            // Set service overview into the center of root layout.
             rootLayout.setCenter(serviceOverview);
 
         } catch (IOException e) {
