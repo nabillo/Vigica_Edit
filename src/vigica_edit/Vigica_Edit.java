@@ -21,6 +21,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -43,6 +44,7 @@ public class Vigica_Edit extends Application {
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("Vigica Edit");
+        this.primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("app_icon.png")));
 
         initRootLayout();
 
