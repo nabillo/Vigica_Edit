@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javafx.concurrent.Task;
 import vigica_edit.model.Service;
 
 /**
@@ -27,7 +28,13 @@ import vigica_edit.model.Service;
  * @author bnabi
  */
 public class Generate_mw_s1 {
+    private Service_BDD bdd = new Service_BDD();
+    public GenerateTask generateTask;
 
+    public Generate_mw_s1 () {
+        generateTask = new GenerateTask();
+    }
+    
     /**
      *
      * @param chemin
@@ -46,21 +53,21 @@ public class Generate_mw_s1 {
                 sdata.set(rcdlen-10, prefba.get(0));
                 sdata.set(rcdlen-9, prefba.get(1));
 
-                sdata.set(rcdlen - 8, (byte) 0x01);
-                int newl = service.getS_name().length();
+                //sdata.set(rcdlen - 8, (byte) 0x01);
+                ArrayList<Byte> newn = new ArrayList();
+                
+                for (byte c : service.getS_name().getBytes("UTF-8"))
+                    newn.add(c);
+                
+                int newl = newn.size();
                 int rcdnamel = Integer.valueOf(sdata.get(1));
-                List<Byte> filler = sdata.subList(2, 2 +3);
+                List<Byte> filler = sdata.subList(2, 2 + 3);
                 List<Byte> payload = sdata.subList(rcdnamel + 5, sdata.size());
                 
                 ArrayList<Byte> newrec = new ArrayList();
                 newrec.add((byte) 0x01);
                 newrec.add((byte) newl);
                 newrec.addAll(filler);
-                
-                ArrayList<Byte> newn = new ArrayList();
-                
-                for (byte c : service.getS_name().getBytes("UTF-8"))
-                    newn.add(c);
                 
                 newrec.addAll(newn);
                 
@@ -93,6 +100,7 @@ public class Generate_mw_s1 {
         });
         
         String crcresult = crc.getValue();
+        crcresult = ("00000000" + crcresult).substring(crcresult.length());
         ArrayList<Byte> crcbyte = hexStringToBytes(crcresult);
         
         ArrayList<Byte> mw_s1 = new ArrayList();
@@ -106,7 +114,7 @@ public class Generate_mw_s1 {
         
     }
 
-    public static ArrayList<Byte> hexStringToBytes(String s) {
+    private static ArrayList<Byte> hexStringToBytes(String s) {
         int len = s.length();
         byte[] temp = new byte[len / 2];
         ArrayList<Byte> data = new ArrayList<>(len / 2);
@@ -137,16 +145,45 @@ public class Generate_mw_s1 {
 
         if (preference.length() != 0) {
             for (String perf : preference.split("-")) {
-                Double pos = Math.pow(2, Integer.valueOf(perf) - 1);
-                if (Integer.valueOf(perf) < 8) {
+                
+                if (Integer.valueOf(perf) <= 8) {
+                    Double pos = Math.pow(2, Integer.valueOf(perf) - 1);
                     byte temp = (byte) (ppr.get(1) | pos.byteValue());
                     ppr.set(1, temp);
                 } else {
+                    Double pos = Math.pow(2, Integer.valueOf(perf) - 8 - 1);
                     byte temp = (byte) (ppr.get(0) | pos.byteValue());
                     ppr.set(0, temp);
                 }
             }
         }
         return ppr;
+    }
+    
+    public class GenerateTask extends Task<Void> {
+
+        private String chemin;
+        
+        public String getChemin() {
+            return this.chemin;
+        }
+
+        public void setChemin(String chemin) {
+            this.chemin = chemin;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            ArrayList<Service> services;
+            int count = 0;
+
+            updateProgress(-1, 0);
+            String sql = "FROM Service ";
+            services = bdd.read_bdd(sql);
+
+            compress(services, chemin);
+
+            return null;
+        };
     }
 }

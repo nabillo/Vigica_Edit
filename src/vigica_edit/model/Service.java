@@ -36,6 +36,7 @@ public class Service {
     private final StringProperty s_ppr;
     private final StringProperty s_line;
     private final BooleanProperty s_flag;
+    private final StringProperty s_new;
     
     /**
     * Default constructor.
@@ -48,9 +49,10 @@ public class Service {
         this.s_ppr = new SimpleStringProperty("");
         this.s_line = new SimpleStringProperty("");
         this.s_flag = new SimpleBooleanProperty(false);
+        this.s_new = new SimpleStringProperty("");
     }
     
-    public Service(String stype, Integer recd_idx, String rcdname_s, Integer nid_d, String ppr_s, String line_s, Boolean flag_b) {
+    public Service(String stype, Integer recd_idx, String rcdname_s, Integer nid_d, String ppr_s, String line_s, Boolean flag_b, String new_b) {
         this.s_type = new SimpleStringProperty(stype);
         this.s_idx = new SimpleIntegerProperty(recd_idx);
         this.s_name = new SimpleStringProperty(rcdname_s);
@@ -58,6 +60,7 @@ public class Service {
         this.s_ppr = new SimpleStringProperty(ppr_s);
         this.s_line = new SimpleStringProperty(line_s);
         this.s_flag = new SimpleBooleanProperty(flag_b);
+        this.s_new = new SimpleStringProperty(new_b);
     }
 
     public String getS_type() {
@@ -142,5 +145,17 @@ public class Service {
 
     public BooleanProperty s_flagProperty() {
         return s_flag;
+    }
+    
+    public String getS_new() {
+        return s_new.get();
+    }
+
+    public void setS_new(String s_new) {
+        this.s_new.set(s_new);
+    }
+
+    public StringProperty s_newProperty() {
+        return s_new;
     }
 }

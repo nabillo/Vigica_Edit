@@ -22,6 +22,9 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import vigica_edit.view.Error_Msg;
 import vigica_edit.model.Service;
 
@@ -34,6 +37,10 @@ public class Decompress_mw_s1 {
     
     private final byte[] endpatt = {(byte) 0x00, (byte)0x00, (byte)0x3f, (byte)0xff};
     static private Error_Msg error_msg = new Error_Msg();
+    private Service_BDD bdd = new Service_BDD();
+    public DecompressTask decompressTask;
+    public DuplicateTask duplicateTask;
+    
     
     public ArrayList<Service> services = new ArrayList();
 
@@ -41,6 +48,11 @@ public class Decompress_mw_s1 {
         return services;
     }
     
+    public Decompress_mw_s1 () {
+        decompressTask = new DecompressTask();
+        duplicateTask = new DuplicateTask();
+    }
+
     /**
      *
      * @param chemin
@@ -96,7 +108,7 @@ public class Decompress_mw_s1 {
                 String rcdname_s = new String(rcdname, "UTF-8");
                 String binrcd_s = bytesToHexString(binrcd);
 //            String asciiname = stype + "~" + recd_idx + "~" + rcdname_s + "~E0~" + "N" + nid_d + "~" + "P" + ppr_s;
-                services.add(new Service(stype, recd_idx, rcdname_s, nid_d, ppr_s,binrcd_s, false));
+                services.add(new Service(stype, recd_idx, rcdname_s, nid_d, ppr_s,binrcd_s, false, ""));
                 recd_idx++;
                 bind_idx = nxt_idx;
             }
@@ -105,7 +117,7 @@ public class Decompress_mw_s1 {
         }
     }
 
-    public static String bytesToHexString(byte[] in) {
+    private static String bytesToHexString(byte[] in) {
         final StringBuilder builder = new StringBuilder();
         for (byte b : in) {
             builder.append(String.format("%02x", b));
@@ -130,15 +142,27 @@ public class Decompress_mw_s1 {
 
     private String getPreference(byte[] ppr) {
         String ppr_s ="";
+        Boolean isFirst = true;
+        
         for(int i=0; i<8; i++) {
             if (((ppr[1] >> i) & 1) == 1) {
-                ppr_s += (i+1) + "-";
+                if (isFirst) {
+                    ppr_s += (i+1);
+                    isFirst = false;
+                }
+                else
+                    ppr_s += "-" + (i+1);
             }
         }
         for(int i=9; i<=10; i++) {
             if (((ppr[0] >> (i-9)) & 1) == 1) {
                 if (i<10)
-                    ppr_s += (i) + "-";
+                    if (isFirst) {
+                        ppr_s += (i);
+                        isFirst = false;
+                    }
+                    else
+                        ppr_s += "-" + (i);
                 else
                     ppr_s += (i);
             }
@@ -146,7 +170,7 @@ public class Decompress_mw_s1 {
         return ppr_s;
     }
     
-    public Boolean isPreferenceOn(String ppr_s, int index) {
+    public static Boolean isPreferenceOn(String ppr_s, int index) {
         Boolean isOk = false;
         for (String ppr: ppr_s.split("-")){
             if (ppr.equals(String.valueOf(index))) {
@@ -156,7 +180,7 @@ public class Decompress_mw_s1 {
         return isOk;
     }
     
-    public String add_ppr(String old_ppr, int new_Value) {
+    public static String add_ppr(String old_ppr, int new_Value) {
         String new_ppr = "";
         Boolean isFirst = true;
         Boolean isAdded = false;
@@ -194,7 +218,7 @@ public class Decompress_mw_s1 {
         return new_ppr;
     }
     
-    public String remove_ppr(String old_ppr, int new_Value) {
+    public static String remove_ppr(String old_ppr, int new_Value) {
         String new_ppr = "";
         Boolean isFirst = true;
         
@@ -212,5 +236,77 @@ public class Decompress_mw_s1 {
             }
         }
         return new_ppr;
+    }
+    
+    public class DecompressTask extends Task<ArrayList<Service>> {
+
+        private String chemin;
+        
+        public String getChemin() {
+            return this.chemin;
+        }
+
+        public void setChemin(String chemin) {
+            this.chemin = chemin;
+        }
+
+        @Override
+        protected ArrayList<Service> call() throws Exception {
+            ArrayList<Service> services;
+            int count = 0;
+
+            updateProgress(-1, 0);
+            decompress(chemin);
+            services = getServices();
+
+            // Add to database
+            bdd.truncate_bdd();
+            for(Service service : services){
+                count++;
+                updateProgress(count, services.size());
+                bdd.save_bdd(service);
+            }
+
+            return services;
+        };
+    }
+    
+    public class DuplicateTask extends Task<ArrayList<Service>> {
+
+        ObservableList<Service> services = FXCollections.observableArrayList();
+        
+        public ObservableList <Service> getServices() {
+            return this.services;
+        }
+
+        public void setServices(ObservableList <Service> services) {
+            this.services = services;
+        }
+
+        @Override
+        protected ArrayList<Service> call() throws Exception {
+            ArrayList <Service> servicesUnique = new ArrayList();
+            int count = 0;
+
+            updateProgress(-1, 0);
+            ArrayList<String> uniqueId = new ArrayList<>();
+            
+            int i=1;
+
+            for (Service service :this.services) {
+                if (!uniqueId.contains(service.getS_name())) {
+                    service.setS_idx(i);
+                    servicesUnique.add(service);
+                    i++;
+                    uniqueId.add(service.getS_name());
+                }
+            }
+
+            // Add to database
+                bdd.truncate_bdd();
+                bdd.save_bdd(servicesUnique);
+            
+            return servicesUnique;
+        };
     }
 }

@@ -25,6 +25,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -33,6 +34,7 @@ import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -46,6 +48,7 @@ import javafx.util.Callback;
 import org.hibernate.HibernateException;
 import vigica_edit.Decompress_mw_s1;
 import vigica_edit.Generate_mw_s1;
+import vigica_edit.Compare_mw_s1;
 import vigica_edit.Service_BDD;
 import vigica_edit.model.Service;
 
@@ -54,12 +57,11 @@ import vigica_edit.model.Service;
  * @author bnabi
  */
 public class FXMLMainController implements Initializable {
-    
-    private final Decompress_mw_s1 decompress = new Decompress_mw_s1();
-    private final Generate_mw_s1 generate = new Generate_mw_s1();
+        
     private Service_BDD bdd = new Service_BDD();
     static private Error_Msg error_msg = new Error_Msg();
     final FileChooser fileChooser = new FileChooser();
+    static private String[] perf = {"GENERAL", "INFO", "DOCUMENTARY", "MOVIES", "TV SHOW", "ZIC", "SPORT", "KIDS", "DIN", "MISC"}; 
     
     /**
     * The data as an observable list of Service.
@@ -81,11 +83,15 @@ public class FXMLMainController implements Initializable {
     @FXML
     private TableColumn<Service, String> s_pprColumn;
     @FXML
+    private TableColumn<Service, String> s_newColumn;
+    @FXML
     private TextField s_idx;
     @FXML
     private TextField s_type;
     @FXML
     private TextField s_name;
+    @FXML
+    private ProgressIndicator pi;
 
     /**
      * The constructor.
@@ -96,7 +102,7 @@ public class FXMLMainController implements Initializable {
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
+        pi.setVisible(false);
         serviceTable.setEditable(true);
         s_idxColumn.setCellValueFactory(cellData -> cellData.getValue().s_idxProperty().asObject());
         s_nameColumn.setCellValueFactory(cellData -> cellData.getValue().s_nameProperty());
@@ -104,6 +110,7 @@ public class FXMLMainController implements Initializable {
         s_typeColumn.setCellValueFactory(cellData -> cellData.getValue().s_typeProperty());
         s_nidColumn.setCellValueFactory(cellData -> cellData.getValue().s_nidProperty().asObject());
         s_pprColumn.setCellValueFactory(cellData -> cellData.getValue().s_pprProperty());
+        s_newColumn.setCellValueFactory(cellData -> cellData.getValue().s_newProperty());
         
         // Context menu
         serviceTable.setRowFactory(new Callback<TableView<Service>, TableRow<Service>>() {
@@ -149,11 +156,11 @@ public class FXMLMainController implements Initializable {
                         if (newValue != null) {
                             final ContextMenu cellMenu = new ContextMenu();
                             for (int i=1; i<=10; i++) {
-                                final CheckMenuItem prefMenuItem = new CheckMenuItem("pref"+i);
+                                final CheckMenuItem prefMenuItem = new CheckMenuItem(perf[i-1]);
                                 final int line = i;
 
                                 prefMenuItem.setId(String.valueOf(i));
-                                if (decompress.isPreferenceOn(cell.getText(), i)) {
+                                if (Decompress_mw_s1.isPreferenceOn(cell.getText(), i)) {
                                     prefMenuItem.setSelected(true);
                                 }
 
@@ -164,10 +171,10 @@ public class FXMLMainController implements Initializable {
                                         final Service service = (Service) cell.getTableRow().getItem();
 
                                         if (new_val == true) {
-                                            new_ppr = decompress.add_ppr(cell.getText(), line);
+                                            new_ppr = Decompress_mw_s1.add_ppr(cell.getText(), line);
                                         }
                                         else {
-                                            new_ppr = decompress.remove_ppr(cell.getText(), line);
+                                            new_ppr = Decompress_mw_s1.remove_ppr(cell.getText(), line);
                                         }
                                         
                                         try {
@@ -220,60 +227,106 @@ public class FXMLMainController implements Initializable {
     @FXML
     private void handleImportAction(ActionEvent event) throws Exception {
 
-        ArrayList <Service> services;
+        Decompress_mw_s1 decompress = new Decompress_mw_s1();
         String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
 
         stage = (Stage) serviceTable.getScene().getWindow();
+        fileChooser.setTitle("Open Services File");
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
+            
             chemin = file.getAbsolutePath();
 
-            decompress.decompress(chemin);
-            services = decompress.getServices();
+            pi.visibleProperty().bind(decompress.decompressTask.runningProperty());
+            pi.progressProperty().bind(decompress.decompressTask.progressProperty());
+            decompress.decompressTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent t) {
+                    // print services into tableview
+                    serviceData.setAll(decompress.decompressTask.getValue());
+                    serviceTable.setItems(serviceData);
+                }
+            });
+            decompress.decompressTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent t) {
+                    error_msg.Error_diag("Error save BDD\n" + decompress.decompressTask.getException().getMessage());
+                }
+            });
+            
 
-            // Add to database
-            try{
-                bdd.truncate_bdd();
-                bdd.save_bdd(services);
-
-                // print services into tableview
-                serviceData.setAll(services);
-                serviceTable.setItems(serviceData);
-                error_msg.Info_diag("Services loaded");
-            }catch (HibernateException e) {
-                error_msg.Error_diag("Error save BDD\n"+e.getMessage());
-            }
+            decompress.decompressTask.setChemin(chemin);
+            new Thread(decompress.decompressTask).start();
         }
         else
             error_msg.Error_diag("No file choosed\n");
     }
 
     @FXML
-    private void handleCompareAction(ActionEvent event) {
-        
+    private void handleCompareAction(ActionEvent event) throws Exception {
+
+        final Compare_mw_s1 compare = new Compare_mw_s1();
+        String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1_old";
+
+        stage = (Stage) serviceTable.getScene().getWindow();
+        fileChooser.setTitle("Open Old Services");
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            chemin = file.getAbsolutePath();
+            
+            pi.visibleProperty().bind(compare.compareTask.runningProperty());
+            pi.progressProperty().bind(compare.compareTask.progressProperty());
+            compare.compareTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent t) {
+                    // print services into tableview
+                    serviceData.setAll(compare.compareTask.getValue());
+                }
+            });
+            compare.compareTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent t) {
+                    error_msg.Error_diag("Error compare services\n" + compare.compareTask.getException().getMessage());
+                }
+            });
+            
+
+            compare.compareTask.setChemin(chemin);
+            new Thread(compare.compareTask).start();
+        }
+        else
+            error_msg.Error_diag("No file choosed\n");
     }
     
     @FXML
     private void handleExportAction(ActionEvent event) {
-        final String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
+        final Generate_mw_s1 generate = new Generate_mw_s1();
+        String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
 
         stage = (Stage) serviceTable.getScene().getWindow();
-        File file = fileChooser.showOpenDialog(stage);
+        fileChooser.setTitle("Export Services");
+        File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
-            ArrayList <Service> services = new ArrayList();;
+            chemin = file.getAbsolutePath();
+            
+            pi.visibleProperty().bind(generate.generateTask.runningProperty());
+            pi.progressProperty().bind(generate.generateTask.progressProperty());
+            generate.generateTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent t) {
+                    error_msg.Info_diag("Services exported");
+                }
+            });
+            generate.generateTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent t) {
+                    error_msg.Error_diag("Error compare services\n" + generate.generateTask.getException().getMessage());
+                }
+            });
+            
 
-            try{
-                String sql = "FROM Service ";
-                services = bdd.read_bdd(sql);
-
-                generate.compress(services, chemin);
-                error_msg.Info_diag("Services exported");
-
-            }catch (HibernateException e) {
-                error_msg.Error_diag("Error read BDD\n"+e.getMessage());
-            }catch (Exception e) {
-                error_msg.Error_diag("Error Export\n"+e.getMessage());
-            }
+            generate.generateTask.setChemin(chemin);
+            new Thread(generate.generateTask).start();
         }
         else
             error_msg.Error_diag("No file choosed\n");
@@ -304,31 +357,53 @@ public class FXMLMainController implements Initializable {
     
     @FXML
     private void handleDuplicateAction(ActionEvent event) {
+
+        Decompress_mw_s1 decompress = new Decompress_mw_s1();
         
-        ArrayList<String> uniqueId = new ArrayList<>();
-        ArrayList <Service> services = new ArrayList();
-        int i=1;
-        
-        for (Service service :serviceData) {
-            if (!uniqueId.contains(service.getS_name())) {
-                service.setS_idx(i);
-                services.add(service);
-                i++;
-                uniqueId.add(service.getS_name());
+        pi.visibleProperty().bind(decompress.duplicateTask.runningProperty());
+        pi.progressProperty().bind(decompress.duplicateTask.progressProperty());
+        decompress.duplicateTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent t) {
+                // print services into tableview
+                serviceData.setAll(decompress.duplicateTask.getValue());
             }
-        }
-        
-        // Add to database
-        try{
-            bdd.truncate_bdd();
-            bdd.save_bdd(services);
+        });
+        decompress.duplicateTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent t) {
+                error_msg.Error_diag("Error compare services\n" + decompress.duplicateTask.getException().getMessage());
+            }
+        });
+
+
+        decompress.duplicateTask.setServices(serviceData);
+        new Thread(decompress.duplicateTask).start();
             
-            // print services into tableview
-            serviceData.setAll(services);
-            error_msg.Info_diag("Duplicate removed");
-        }catch (HibernateException e) {
-            error_msg.Error_diag("Error save BDD\n"+e.getMessage());
-        }
+//        ArrayList<String> uniqueId = new ArrayList<>();
+//        ArrayList <Service> services = new ArrayList();
+//        int i=1;
+//        
+//        for (Service service :serviceData) {
+//            if (!uniqueId.contains(service.getS_name())) {
+//                service.setS_idx(i);
+//                services.add(service);
+//                i++;
+//                uniqueId.add(service.getS_name());
+//            }
+//        }
+//        
+//        // Add to database
+//        try{
+//            bdd.truncate_bdd();
+//            bdd.save_bdd(services);
+//            
+//            // print services into tableview
+//            serviceData.setAll(services);
+//            error_msg.Info_diag("Duplicate removed");
+//        }catch (HibernateException e) {
+//            error_msg.Error_diag("Error save BDD\n"+e.getMessage());
+//        }
     }
     
     class EditingCell extends TableCell<Service, String> {

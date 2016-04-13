@@ -53,7 +53,7 @@ public class Service_BDD {
 
             for (Iterator<Service> it = q.iterate(); it.hasNext();) {
                 Service result = it.next();
-                Service service = new Service(result.getS_type(), result.getS_idx(), result.getS_name(), result.getS_nid(), result.getS_ppr(), result.getS_line(), result.getS_flag());
+                Service service = new Service(result.getS_type(), result.getS_idx(), result.getS_name(), result.getS_nid(), result.getS_ppr(), result.getS_line(), result.getS_flag(), result.getS_new());
                 services.add(service);
             }
             tx.commit();

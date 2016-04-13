@@ -9,5 +9,6 @@
     <property column="PPR" name="s_ppr" type="string"/>
     <property column="LINE" name="s_line" type="text"/>
     <property column="FLAG" name="s_flag" type="boolean"/>
+    <property column="NEW" name="s_new" type="string"/>
   </class>
 </hibernate-mapping>
