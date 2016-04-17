@@ -33,6 +33,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
@@ -92,6 +93,8 @@ public class FXMLMainController implements Initializable {
     private TextField s_name;
     @FXML
     private ProgressIndicator pi;
+    @FXML
+    private Label title;
 
     /**
      * The constructor.
@@ -245,6 +248,7 @@ public class FXMLMainController implements Initializable {
                     // print services into tableview
                     serviceData.setAll(decompress.decompressTask.getValue());
                     serviceTable.setItems(serviceData);
+                    title.setText(file.getName());
                 }
             });
             decompress.decompressTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
@@ -269,6 +273,10 @@ public class FXMLMainController implements Initializable {
         String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1_old";
 
         stage = (Stage) serviceTable.getScene().getWindow();
+        if (serviceData.size() == 0) {
+            error_msg.Error_diag("No service file loaded\n");
+            return;
+        }
         fileChooser.setTitle("Open Old Services");
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
@@ -304,6 +312,10 @@ public class FXMLMainController implements Initializable {
         String chemin = "D:\\Info\\Misc\\Vigica\\dvb_s_mw_s1";
 
         stage = (Stage) serviceTable.getScene().getWindow();
+        if (serviceData.size() == 0) {
+            error_msg.Error_diag("No service file loaded\n");
+            return;
+        }
         fileChooser.setTitle("Export Services");
         File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
@@ -372,38 +384,13 @@ public class FXMLMainController implements Initializable {
         decompress.duplicateTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
             @Override
             public void handle(WorkerStateEvent t) {
-                error_msg.Error_diag("Error compare services\n" + decompress.duplicateTask.getException().getMessage());
+                error_msg.Error_diag("Error remove duplicate services\n" + decompress.duplicateTask.getException().getMessage());
             }
         });
 
 
         decompress.duplicateTask.setServices(serviceData);
         new Thread(decompress.duplicateTask).start();
-            
-//        ArrayList<String> uniqueId = new ArrayList<>();
-//        ArrayList <Service> services = new ArrayList();
-//        int i=1;
-//        
-//        for (Service service :serviceData) {
-//            if (!uniqueId.contains(service.getS_name())) {
-//                service.setS_idx(i);
-//                services.add(service);
-//                i++;
-//                uniqueId.add(service.getS_name());
-//            }
-//        }
-//        
-//        // Add to database
-//        try{
-//            bdd.truncate_bdd();
-//            bdd.save_bdd(services);
-//            
-//            // print services into tableview
-//            serviceData.setAll(services);
-//            error_msg.Info_diag("Duplicate removed");
-//        }catch (HibernateException e) {
-//            error_msg.Error_diag("Error save BDD\n"+e.getMessage());
-//        }
     }
     
     class EditingCell extends TableCell<Service, String> {

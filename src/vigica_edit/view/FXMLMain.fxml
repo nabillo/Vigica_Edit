@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.effect.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="900.0" prefWidth="1120.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vigica_edit.view.FXMLMainController">
+<AnchorPane id="AnchorPane" prefHeight="910.0" prefWidth="1130.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vigica_edit.view.FXMLMainController">
     <children>
       <Button fx:id="button1" onAction="#handleImportAction" prefHeight="31.0" prefWidth="125.0" text="Import" textAlignment="CENTER" />
       <Button fx:id="button2" layoutX="140.0" onAction="#handleExportAction" prefHeight="31.0" prefWidth="125.0" text="Export" textAlignment="CENTER" />
@@ -16,7 +17,7 @@
       <TextField fx:id="s_type" layoutX="113.0" layoutY="35.0" prefHeight="31.0" prefWidth="79.0" promptText="Type" />
       <TextField fx:id="s_name" layoutX="193.0" layoutY="35.0" prefHeight="31.0" prefWidth="350.0" promptText="Name" />
       <Button fx:id="button4" layoutX="551.0" layoutY="35.0" onAction="#handleFilterAction" prefHeight="31.0" prefWidth="125.0" text="Filtter" textAlignment="CENTER" />
-      <ProgressBar fx:id="pi" layoutX="676.0" layoutY="6.0" prefHeight="23.0" prefWidth="421.0" progress="0.0" />
+      <ProgressBar fx:id="pi" layoutX="553.0" layoutY="6.0" prefHeight="23.0" prefWidth="550.0" progress="0.0" />
       <TableView fx:id="serviceTable" layoutX="-5.0" layoutY="71.0" prefHeight="769.0" prefWidth="1024.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="71.0">
         <columns>
             <TableColumn fx:id="s_idxColumn" prefWidth="110.0" text="ID" />
@@ -27,5 +28,6 @@
             <TableColumn fx:id="s_newColumn" prefWidth="86.0" text="New" />
         </columns>
       </TableView>
+      <Label fx:id="title" layoutX="703.0" layoutY="39.0" prefHeight="23.0" prefWidth="375.0" textFill="#000000b6" />
     </children>
 </AnchorPane>
