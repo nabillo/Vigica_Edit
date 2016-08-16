@@ -127,7 +127,7 @@ public class Decompress_mw_s1 {
 
     private int find_end(byte[] bindata, int strt) {
         int sidx;
-        for (sidx = strt; sidx <strt+300; sidx++)
+        for (sidx = strt; sidx <strt+1000; sidx++)
         {   
             if (Arrays.equals(Arrays.copyOfRange(bindata, sidx, sidx+4), endpatt))
                 break;
@@ -294,7 +294,7 @@ public class Decompress_mw_s1 {
             int i=1;
 
             for (Service service :this.services) {
-                if (!uniqueId.contains(service.getS_name())) {
+                if (!uniqueId.contains(service.getS_name()) || !service.getS_ppr().equals("")) {
                     service.setS_idx(i);
                     servicesUnique.add(service);
                     i++;

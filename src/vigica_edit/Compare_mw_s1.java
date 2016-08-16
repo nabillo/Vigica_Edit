@@ -48,64 +48,71 @@ public class Compare_mw_s1 {
         compareTask = new CompareTask();
     }
     
-    private void detectNew(ArrayList<Service> services, ArrayList<Service> servicesOld) {
+    private void detectNew(ArrayList<Service> services, ArrayList<Service> servicesOld) throws Exception {
         Boolean isNew;
         
-        
-        for (Service service : services) {
-            isNew = true;
-            String line;
-            String lineOld;
-            
-            for (Service serviceOld : servicesOld) {
-                line = service.getS_line();
-                lineOld = serviceOld.getS_line();
-                
-                //eliminate preference to end part
-                line = line.substring(0, line.length()-20);
-                lineOld = lineOld.substring(0, lineOld.length()-20);
-                
-                if (line.equals(lineOld)) {
-                    isNew = false;
-                }
-            }
-            if (isNew)
-                service.setS_new("N");
-        }
-    }
-    
-    private void integratePPR(ArrayList<Service> services, ArrayList<Service> servicesOld) {
-        Boolean isFind;
-        servicesLost.clear();
-        
-        for (Service serviceOld : servicesOld) {
-            isFind = false;
-            String line;
-            String lineOld;
-            
-            if (serviceOld.getS_ppr().length() != 0) {
-                for (Service service : services) {
+        try {
+            for (Service service : services) {
+                isNew = true;
+                String line;
+                String lineOld;
+
+                for (Service serviceOld : servicesOld) {
                     line = service.getS_line();
                     lineOld = serviceOld.getS_line();
 
                     //eliminate preference to end part
-                    line = line.substring(0, line.length()-20);
-                    lineOld = lineOld.substring(0, lineOld.length()-20);
+                    line = line.substring(0, line.length()-26);
+                    lineOld = lineOld.substring(0, lineOld.length()-26);
 
                     if (line.equals(lineOld)) {
-                        service.setS_ppr(serviceOld.getS_ppr());
-                        service.setS_flag(true);
-                        isFind = true;
-                        break;
+                        isNew = false;
                     }
                 }
+                if (isNew)
+                    service.setS_new("N");
             }
-            else
-                isFind = true;
-            
-            if (!isFind) {
-                servicesLost.add(new Service(serviceOld.getS_type(), serviceOld.getS_idx(), serviceOld.getS_name(), serviceOld.getS_nid(), serviceOld.getS_ppr(), serviceOld.getS_line(), serviceOld.getS_flag(), serviceOld.getS_new()));
+        }catch (Exception e) {
+            throw new Exception(e.getCause().getMessage());
+        }
+    }
+    
+    private void integratePPR(ArrayList<Service> services, ArrayList<Service> servicesOld) throws Exception {
+        Boolean isFind;
+        servicesLost.clear();
+        
+        try {
+            for (Service serviceOld : servicesOld) {
+                isFind = false;
+                String line;
+                String lineOld;
+
+                if (serviceOld.getS_ppr().length() != 0) {
+                    for (Service service : services) {
+                        line = service.getS_line();
+                        lineOld = serviceOld.getS_line();
+
+                        //eliminate preference to end part
+                        line = line.substring(0, line.length()-20);
+                        lineOld = lineOld.substring(0, lineOld.length()-20);
+
+                        if (line.equals(lineOld)) {
+                            service.setS_ppr(serviceOld.getS_ppr());
+                            service.setS_flag(true);
+                            isFind = true;
+                            break;
+                        }
+                    }
+                }
+                else
+                    isFind = true;
+
+                if (!isFind) {
+                    servicesLost.add(new Service(serviceOld.getS_type(), serviceOld.getS_idx(), serviceOld.getS_name(), serviceOld.getS_nid(), serviceOld.getS_ppr(), serviceOld.getS_line(), serviceOld.getS_flag(), serviceOld.getS_new()));
+                }
             }
+        }catch (Exception e) {
+            throw new Exception(e.getCause().getMessage());
         }
     }
     
@@ -128,7 +135,7 @@ public class Compare_mw_s1 {
             Scene scene = new Scene(rootLayout);
             modal_dialog.setScene(scene);
             modal_dialog.show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
