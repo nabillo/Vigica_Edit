@@ -58,15 +58,12 @@ public class Compare_mw_s1 {
                 String lineOld;
 
                 for (Service serviceOld : servicesOld) {
-                    line = service.getS_line();
-                    lineOld = serviceOld.getS_line();
+                    line = service.getS_name();
+                    lineOld = serviceOld.getS_name();
 
-                    //eliminate preference to end part
-                    line = line.substring(0, line.length()-26);
-                    lineOld = lineOld.substring(0, lineOld.length()-26);
-
-                    if (line.equals(lineOld)) {
+                    if (line.equalsIgnoreCase(lineOld)) {
                         isNew = false;
+                        break;
                     }
                 }
                 if (isNew)
@@ -89,14 +86,10 @@ public class Compare_mw_s1 {
 
                 if (serviceOld.getS_ppr().length() != 0) {
                     for (Service service : services) {
-                        line = service.getS_line();
-                        lineOld = serviceOld.getS_line();
+                        line = service.getS_name();
+                        lineOld = serviceOld.getS_name();
 
-                        //eliminate preference to end part
-                        line = line.substring(0, line.length()-20);
-                        lineOld = lineOld.substring(0, lineOld.length()-20);
-
-                        if (line.equals(lineOld)) {
+                        if (line.equalsIgnoreCase(lineOld)) {
                             service.setS_ppr(serviceOld.getS_ppr());
                             service.setS_flag(true);
                             isFind = true;
